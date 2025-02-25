@@ -218,9 +218,9 @@ class Namespace:
                 "vectors", self.name, payload=data.__dict__
             )
 
-            assert (
-                response.get("content", dict()).get("status", "") == "OK"
-            ), f"Invalid upsert() response: {response}"
+            assert response.get("content", dict()).get("status", "") == "OK", (
+                f"Invalid upsert() response: {response}"
+            )
             self.metadata = None  # Invalidate cached metadata
         elif isinstance(data, VectorRow):
             raise ValueError(
@@ -295,6 +295,7 @@ class Namespace:
         vectors: List[List[float]],
         attributes: Optional[Dict[str, List[Optional[str]]]] = None,
         schema: Optional[Dict] = None,
+        distance_metric: Optional[Dict] = None,
     ) -> None:
         """
         Creates or updates multiple vectors provided in a column-oriented layout.
@@ -305,7 +306,12 @@ class Namespace:
         ...
 
     @overload
-    async def async_upsert(self, data: Union[dict, VectorColumns]) -> None:
+    async def async_upsert(
+        self,
+        data: Union[dict, VectorColumns],
+        distance_metric: Optional[Dict] = None,
+        schema: Optional[Dict] = None,
+    ) -> None:
         """
         Creates or updates multiple vectors provided in a column-oriented layout.
         If this call succeeds, data is guaranteed to be durably written to object storage.
@@ -316,7 +322,10 @@ class Namespace:
 
     @overload
     async def async_upsert(
-        self, data: Union[Iterable[dict], Iterable[VectorRow]]
+        self,
+        data: Union[Iterable[dict], Iterable[VectorRow]],
+        distance_metric: Optional[Dict] = None,
+        schema: Optional[Dict] = None,
     ) -> None:
         """
         Creates or updates a multiple vectors provided as a list or iterator.
@@ -327,7 +336,12 @@ class Namespace:
         ...
 
     @overload
-    async def async_upsert(self, data: VectorResult) -> None:
+    async def async_upsert(
+        self,
+        data: VectorResult,
+        distance_metric: Optional[Dict] = None,
+        schema: Optional[Dict] = None,
+    ) -> None:
         """
         Creates or updates multiple vectors.
         If this call succeeds, data is guaranteed to be durably written to object storage.
@@ -337,20 +351,29 @@ class Namespace:
         ...
 
     async def async_upsert(
-        self, data=None, ids=None, vectors=None, schema=None, attributes=None
+        self,
+        data=None,
+        ids=None,
+        vectors=None,
+        schema=None,
+        attributes=None,
+        distance_metric=None,
     ) -> None:
         if data is None:
             if ids is not None and vectors is not None:
                 return await self.async_upsert(
                     VectorColumns(ids=ids, vectors=vectors, attributes=attributes),
                     schema=schema,
+                    distance_metric=distance_metric,
                 )
             else:
                 raise ValueError("upsert() requires both ids= and vectors= be set.")
         elif ids is not None and attributes is None:
             # Offset arguments to handle positional arguments case with no data field.
             return await self.async_upsert(
-                VectorColumns(ids=data, vectors=ids, attributes=vectors), schema=schema
+                VectorColumns(ids=data, vectors=ids, attributes=vectors),
+                schema=schema,
+                distance_metric=distance_metric,
             )
         elif isinstance(data, VectorColumns):
             # "if None in data.vectors:" is not supported because data.vectors might be a list of np.ndarray
@@ -365,13 +388,16 @@ class Namespace:
             if schema is not None:
                 payload["schema"] = schema
 
+            if distance_metric is not None:
+                payload["distance_metric"] = distance_metric
+
             response = await self.async_backend.make_api_request(
                 "vectors", self.name, payload=payload
             )
 
-            assert (
-                response.get("content", dict()).get("status", "") == "OK"
-            ), f"Invalid upsert() response: {response}"
+            assert response.get("content", dict()).get("status", "") == "OK", (
+                f"Invalid upsert() response: {response}"
+            )
             self.metadata = None  # Invalidate cached metadata
         elif isinstance(data, VectorRow):
             raise ValueError(
@@ -471,9 +497,9 @@ class Namespace:
         else:
             raise ValueError(f"Unsupported ids type: {type(ids)}")
 
-        assert (
-            response.get("content", dict()).get("status", "") == "OK"
-        ), f"Invalid delete() response: {response}"
+        assert response.get("content", dict()).get("status", "") == "OK", (
+            f"Invalid delete() response: {response}"
+        )
         self.metadata = None  # Invalidate cached metadata
 
     async def async_delete(self, ids: Union[int, str, List[int], List[str]]) -> None:
@@ -502,9 +528,9 @@ class Namespace:
         else:
             raise ValueError(f"Unsupported ids type: {type(ids)}")
 
-        assert (
-            response.get("content", dict()).get("status", "") == "OK"
-        ), f"Invalid delete() response: {response}"
+        assert response.get("content", dict()).get("status", "") == "OK", (
+            f"Invalid delete() response: {response}"
+        )
         self.metadata = None  # Invalidate cached metadata
 
     @overload
@@ -670,9 +696,9 @@ class Namespace:
         response = self.backend.make_api_request(
             "vectors", self.name, "index", method="DELETE"
         )
-        assert (
-            response.get("content", dict()).get("status", "") == "ok"
-        ), f"Invalid delete_all_indexes() response: {response}"
+        assert response.get("content", dict()).get("status", "") == "ok", (
+            f"Invalid delete_all_indexes() response: {response}"
+        )
 
     async def async_delete_all_indexes(self) -> None:
         """
@@ -682,9 +708,9 @@ class Namespace:
         response = await self.async_backend.make_api_request(
             "vectors", self.name, "index", method="DELETE"
         )
-        assert (
-            response.get("content", dict()).get("status", "") == "ok"
-        ), f"Invalid delete_all_indexes() response: {response}"
+        assert response.get("content", dict()).get("status", "") == "ok", (
+            f"Invalid delete_all_indexes() response: {response}"
+        )
 
     def delete_all(self) -> None:
         """
@@ -692,9 +718,9 @@ class Namespace:
         """
 
         response = self.backend.make_api_request("vectors", self.name, method="DELETE")
-        assert (
-            response.get("content", dict()).get("status", "") == "ok"
-        ), f"Invalid delete_all() response: {response}"
+        assert response.get("content", dict()).get("status", "") == "ok", (
+            f"Invalid delete_all() response: {response}"
+        )
         self.metadata = None  # Invalidate cached metadata
 
     async def async_delete_all(self) -> None:
@@ -705,9 +731,9 @@ class Namespace:
         response = await self.async_backend.make_api_request(
             "vectors", self.name, method="DELETE"
         )
-        assert (
-            response.get("content", dict()).get("status", "") == "ok"
-        ), f"Invalid delete_all() response: {response}"
+        assert response.get("content", dict()).get("status", "") == "ok", (
+            f"Invalid delete_all() response: {response}"
+        )
         self.metadata = None  # Invalidate cached metadata
 
     def recall(self, num=20, top_k=10) -> float:
