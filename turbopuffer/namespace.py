@@ -295,7 +295,7 @@ class Namespace:
         vectors: List[List[float]],
         attributes: Optional[Dict[str, List[Optional[str]]]] = None,
         schema: Optional[Dict] = None,
-        distance_metric: Optional[Dict] = None,
+        distance_metric: Optional[str] = None,
     ) -> None:
         """
         Creates or updates multiple vectors provided in a column-oriented layout.
@@ -309,7 +309,7 @@ class Namespace:
     async def async_upsert(
         self,
         data: Union[dict, VectorColumns],
-        distance_metric: Optional[Dict] = None,
+        distance_metric: Optional[str] = None,
         schema: Optional[Dict] = None,
     ) -> None:
         """
@@ -324,7 +324,7 @@ class Namespace:
     async def async_upsert(
         self,
         data: Union[Iterable[dict], Iterable[VectorRow]],
-        distance_metric: Optional[Dict] = None,
+        distance_metric: Optional[str] = None,
         schema: Optional[Dict] = None,
     ) -> None:
         """
@@ -339,7 +339,7 @@ class Namespace:
     async def async_upsert(
         self,
         data: VectorResult,
-        distance_metric: Optional[Dict] = None,
+        distance_metric: Optional[str] = None,
         schema: Optional[Dict] = None,
     ) -> None:
         """
