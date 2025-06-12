@@ -3,7 +3,7 @@ import json
 import re
 import time
 import traceback
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 import anyio
 import httpx
@@ -28,6 +28,7 @@ def find_api_key(api_key: Optional[str] = None) -> str:
 class Backend:
     api_key: str
     api_base_url: str
+    api_base_url_v2: str
     client: httpx.Client
 
     def __init__(
@@ -35,6 +36,7 @@ class Backend:
     ):
         self.api_key = find_api_key(api_key)
         self.api_base_url = tpuf.api_base_url
+        self.api_base_url_v2 = tpuf.api_base_url_v2
         self.client = client or httpx.Client()
         self.client.headers.update(
             {
@@ -58,6 +60,7 @@ class Backend:
         method: Optional[str] = None,
         query: Optional[dict] = None,
         payload: Optional[dict] = None,
+        version: Literal["v1"] | Literal["v2"] = "v1",
     ) -> dict:
         start = time.monotonic()
         if method is None and payload is not None:
@@ -89,9 +92,11 @@ class Backend:
                 }
             )
 
+        base_url = self.api_base_url_v2 if version == "v2" else self.api_base_url
+
         prepared = self.client.build_request(
             method or "GET",
-            self.api_base_url + "/" + "/".join(args),
+            base_url + "/" + "/".join(args),
             params=query,
             headers=updated_headers,
             data=gzip_payload,
