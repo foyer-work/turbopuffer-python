@@ -207,6 +207,7 @@ class Backend:
 class AsyncBackend:
     api_key: str
     api_base_url: str
+    api_base_url_v2: str
     async_client: httpx.AsyncClient
 
     def __init__(
@@ -217,6 +218,7 @@ class AsyncBackend:
     ):
         self.api_key = find_api_key(api_key)
         self.api_base_url = tpuf.api_base_url
+        self.api_base_url_v2 = tpuf.api_base_url_v2
         self.async_client = async_client or httpx.AsyncClient()
         self.async_client.headers.update(
             {
@@ -240,6 +242,7 @@ class AsyncBackend:
         method: Optional[str] = None,
         query: Optional[dict] = None,
         payload: Optional[dict] = None,
+        version: Literal["v1", "v2"] = "v1",
     ) -> dict:
         start = time.monotonic()
         if method is None and payload is not None:
@@ -271,9 +274,11 @@ class AsyncBackend:
                 }
             )
 
+        base_url = self.api_base_url_v2 if version == "v2" else self.api_base_url
+
         prepared = self.async_client.build_request(
             method or "GET",
-            self.api_base_url + "/" + "/".join(args),
+            base_url + "/" + "/".join(args),
             params=query,
             headers=updated_headers,
             data=gzip_payload,
